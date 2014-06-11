@@ -1,0 +1,10 @@
+{
+    "name": "DevTools CSS Class Toggler",
+    "short_name": "DevTools Classes",
+    "version": "0.1",
+    "description": "Toggle elements CSS classes",
+    "author": "Gustavo Sillero <gustavo@sille.ro>",
+    "homepage_url": "http://gustavo.sille.ro",
+    "devtools_page": "devtools.html",
+    "manifest_version": 2
+}

@@ -1,0 +1,38 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+ul,
+li {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: block;
+}
+
+.empty {
+  font-style: italic;
+  color: #999;
+  display: block;
+  text-align: center;
+  padding: 10px;
+}
+
+label {
+  padding: 3px 8px;
+  color: red;
+  cursor: pointer;
+  display: inline-block;
+}
+
+label:hover {
+  background: #eee;
+}
