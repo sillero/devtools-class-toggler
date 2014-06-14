@@ -18,17 +18,45 @@
       log: function(){ execute(REMOTE$consoleLog, arguments); },
       error: function(){ execute(REMOTE$consoleError, arguments); },
       debug: function(){ execute(REMOTE$consoleDebug, arguments); },
+      internalChange: false,
       initialize: function(){
         bindLists();
-        onSelectionChanged();
-        panels.elements.onSelectionChanged.addListener(onSelectionChanged);
-        execute(REMOTE$bindAttributeChange);
+        updateLists();
+        bindSelectionChanged();
+        bindAttributeChanged();
+        watchElementChanged();
       }
     };
   }
   
-  function onSelectionChanged() {
-    execute(REMOTE$fetchElement, [], updateLists);
+  function watchElementChanged() {
+    setInterval(function(){
+      execute(REMOTE$checkElementChanged, [], function(changed){
+        if (changed && !app.internalChange) {
+          execute(REMOTE$clearElementChanged, [], updateLists);
+        }
+        else {
+          app.internalChange = false;
+          execute(REMOTE$clearElementChanged);
+        }
+      });
+    }, 500);
+  }
+  
+  function bindAttributeChanged() {
+    execute(REMOTE$bindAttributeChanged);
+  }
+  
+  function bindSelectionChanged() {
+    panels.elements.onSelectionChanged.addListener(updateLists);
+  }
+  
+  function updateLists() {
+    execute(REMOTE$fetchElement, [], function(element) {
+      updateClassList(element.classes);
+      updateAttributeList(element.attributes);
+      updateStateList(element.states);
+    });
   }
   
   function updateClasses() {
@@ -42,7 +70,6 @@
   function updateAttributes() {
     execute(REMOTE$fetchElement, [], function(element){ updateAttributeList(element.attributes); });
   }
-  
   /*
   
     BIND LISTS
@@ -59,6 +86,7 @@
     app.$classList
       .on('click', '.add', addItemClassList)
       .on('change', 'input[type="checkbox"]', function(){
+        app.internalChange = true;
         execute(REMOTE$toggleClass, [this.getAttribute('data-name'), this.checked]);
       });
   }
@@ -66,6 +94,7 @@
   function bindStateList() {
     app.$stateList
       .on('change', 'input', function(){
+        app.internalChange = true;
         execute(REMOTE$toggleState, [this.getAttribute('data-name'), this.checked]);
       });
   }
@@ -79,12 +108,15 @@
         var $input = $item.find('input[type="text"]');
         var attributeName = $checkbox.attr('data-name');
         
+        app.internalChange = true;
         execute(REMOTE$toggleAttribute, [attributeName, $checkbox[0].checked, $input.val()]);
         
         if (attributeName === 'class') {
+          app.internalChange = true;
           updateClasses();
         }
         if ({selected:1, checked:1}[attributeName]) {
+          app.internalChange = true;
           updateStates();
         }
       });
@@ -102,6 +134,7 @@
     $newClass
       .on('blur change', 'input', function(){
         if (this.value) {
+          app.internalChange = true;
           execute(REMOTE$toggleClass, [this.value, true]);
           updateClasses();
         }
@@ -130,6 +163,7 @@
     $newAttribute
       .on('blur change', 'input', function(){
         if (this.value) {
+          app.internalChange = true;
           execute(REMOTE$toggleAttribute, [this.value, true, '']);
           updateAttributes();
         }
@@ -151,12 +185,6 @@
     UPDATE LISTS
   
   */
-  
-  function updateLists(element) {
-    updateClassList(element.classes);
-    updateAttributeList(element.attributes);
-    updateStateList(element.states);
-  }
   
   function updateClassList(classes) {
     var html = '<li class="empty">No classes</li>';
@@ -228,25 +256,25 @@
     //console.error.apply(console, [].slice.call(arguments, 1));
   }
   
-  function REMOTE$fetchElement($0) {
+  function REMOTE$fetchElement(inspectedElement) {
     var element = {
       classes: [],
       attributes: [],
       states: []
     };
 
-    if ({checkbox: 1, radio:1}[$0.type]) {
-      element.states.push({ name: 'checked',  value: $0.checked });
+    if ({checkbox: 1, radio:1}[inspectedElement.type]) {
+      element.states.push({ name: 'checked',  value: inspectedElement.checked });
     }
-    if ($0.tagName === 'OPTION') {
-      element.states.push({ name: 'selected',  value: $0.selected });
+    if (inspectedElement.tagName === 'OPTION') {
+      element.states.push({ name: 'selected',  value: inspectedElement.selected });
     }
     
-    [].forEach.call($0.classList, function(_class){
+    [].forEach.call(inspectedElement.classList, function(_class){
       element.classes.push(_class);
     });
     
-    [].forEach.call($0.attributes, function(_attribute){
+    [].forEach.call(inspectedElement.attributes, function(_attribute){
       element.attributes.push({ name: _attribute.name, value: _attribute.value });
     });
     
@@ -270,14 +298,31 @@
     }
   }
   
-  function REMOTE$bindAttributeChange(element) {
-    var callback = function(e){
-      //find how to trigger a reaction from inspectedWindow into
-      //the extension to update the panel
-      //alert('mutated');
-    };
-    var mutation = new MutationObserver(callback);
-    
-    mutation.observe(document, { attributes: true, subtree: true });
+  function REMOTE$bindAttributeChanged(element) {
+    var extension = document.extensionClassAttributeToggler;
+    if (!extension || !extension.bound) {
+      var callback = function(mutations){
+        mutations.forEach(function(mutation){
+          if (mutation.target === $0) {
+            //send update signal back;
+            document.extensionClassAttributeToggler.changed = true;
+          }
+        });
+      };
+      var mutation = new MutationObserver(callback);
+      
+      mutation.observe(document, { attributes: true, subtree: true });
+      document.extensionClassAttributeToggler = {
+        bound: true
+      };
+    }
+  }
+  
+  function REMOTE$clearElementChanged() {
+    document.extensionClassAttributeToggler.changed = false;
+  }
+  
+  function REMOTE$checkElementChanged() {
+    return document.extensionClassAttributeToggler.changed;
   }
 })(chrome, chrome.devtools.panels, chrome.devtools.inspectedWindow, Zepto);

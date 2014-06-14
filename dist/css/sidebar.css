@@ -1,0 +1,99 @@
+*, *::before, *::after {
+  box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Helvetica Neue, Arial;
+  font-size: 12px;
+  border-bottom: 1px solid #ddd; }
+
+#sidebar {
+  display: flex;
+  height: 100%; }
+  #sidebar h2 {
+    background: #e5e5e5;
+    font-size: 12px;
+    padding: 2px 4px;
+    border: solid #ddd;
+    border-width: 1px 0;
+    margin: 0;
+    font-weight: normal;
+    color: #333;
+    position: relative; }
+    #sidebar h2 .add {
+      position: absolute;
+      right: 0;
+      top: 0;
+      font-weight: bold;
+      font-size: 16px;
+      line-height: 12px;
+      padding: 2px 4px 4px;
+      cursor: pointer;
+      color: #888;
+      display: block; }
+    #sidebar h2 .add:hover {
+      background: #bbb;
+      color: #333; }
+  #sidebar ul, #sidebar li {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: block; }
+  #sidebar li:nth-child(2n) {
+    background: #f5f5f5; }
+    #sidebar li:nth-child(2n) input[type="text"] {
+      background: #f5f5f5; }
+  #sidebar li:not(.empty):hover {
+    background: #eee; }
+  #sidebar li:hover input[type="text"] {
+    background: #fff; }
+  #sidebar .empty {
+    font-style: italic;
+    color: #999;
+    display: block;
+    text-align: center;
+    padding: 10px; }
+  #sidebar label {
+    padding: 2px 8px;
+    color: #ff0000;
+    cursor: pointer;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden; }
+  #sidebar input[type="text"] {
+    border: 0; }
+  #sidebar .wrapper {
+    width: 50%;
+    height: 100%;
+    overflow: auto; }
+    #sidebar .wrapper:first-child {
+      border-right: 1px solid #bbb; }
+  #sidebar #classList input[type="text"] {
+    display: block;
+    width: 100%;
+    padding: 4px; }
+  #sidebar #attributeList li {
+    display: flex;
+    padding-right: 8px; }
+  #sidebar #attributeList label {
+    display: inline-block;
+    color: #650082; }
+  #sidebar #attributeList input[type="text"] {
+    display: block;
+    flex: 1; }
+  #sidebar #stateList {
+    background: #eee; }
+    #sidebar #stateList ul {
+      display: flex;
+      flex-wrap: wrap; }
+    #sidebar #stateList li {
+      width: 50%; }
+      #sidebar #stateList li:hover {
+        background: #f5f5f5; }
+    #sidebar #stateList label {
+      padding: 8px;
+      color: #222; }
+  #sidebar .edit .empty {
+    display: none; }

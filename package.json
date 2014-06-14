@@ -1,0 +1,23 @@
+{
+  "name": "devtools-class-toggler",
+  "manifest": {
+      "name": "DevTools CSS Class/Attribute Toggler",
+      "short_name": "DevTools Classes & Attributes",
+      "version": "0.2.2",
+      "description": "Toggle elements classes and attributes",
+      "author": "Gustavo Sillero <gustavo@sille.ro>",
+      "homepage_url": "http://gustavo.sille.ro",
+      "devtools_page": "devtools.html",
+      "manifest_version": 2
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-clean": "^0.5.0",
+    "grunt-contrib-copy": "^0.5.0",
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-contrib-uglify": "^0.5.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-sass": "^0.13.1",
+    "grunt-zip": "^0.13.0"
+  }
+}

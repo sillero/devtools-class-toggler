@@ -1,0 +1,26 @@
+linters:
+    Indentation:
+        enabled: true
+        width: 2
+
+    SpaceAfterPropertyColon:
+        enabled: true
+        allow_extra_spaces: true
+
+    NameFormat:
+        enabled: false
+
+    UrlFormat:
+        enabled: false
+
+    PropertySortOrder:
+        enabled: false
+
+    CapitalizationInSelector:
+        enabled: false
+
+    BorderZero:
+        enabled: false
+
+    Shorthand:
+        enabled: false
