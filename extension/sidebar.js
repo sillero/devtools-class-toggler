@@ -39,6 +39,10 @@
     execute(REMOTE$fetchElement, [], function(element){ updateStateList(element.states); });
   }
   
+  function updateAttributes() {
+    execute(REMOTE$fetchElement, [], function(element){ updateAttributeList(element.attributes); });
+  }
+  
   /*
   
     BIND LISTS
@@ -53,7 +57,8 @@
   
   function bindClassList() {
     app.$classList
-      .on('change', 'input', function(){
+      .on('click', '.add', addItemClassList)
+      .on('change', 'input[type="checkbox"]', function(){
         execute(REMOTE$toggleClass, [this.getAttribute('data-name'), this.checked]);
       });
   }
@@ -67,6 +72,7 @@
   
   function bindAttributeList() {
     app.$attributeList
+      .on('click', '.add', addItemAttributeList)
       .on('change', 'input', function(){
         var $item = $(this).closest('li');
         var $checkbox = $item.find('input[type="checkbox"]');
@@ -86,6 +92,62 @@
   
   /*
   
+    ADD ITEM TO LIST
+    
+  */
+  
+  function addItemClassList() {
+    var $newClass = $('<li><input type="text"></li>');
+  
+    $newClass
+      .on('blur change', 'input', function(){
+        if (this.value) {
+          execute(REMOTE$toggleClass, [this.value, true]);
+          updateClasses();
+        }
+        else {
+          $newClass.remove();
+        }
+        app.$classList.removeClass('edit');
+      })
+      .on('keydown', 'input', function(e){
+        if (e.keyCode === 32) {
+          e.preventDefault();
+        }
+      });
+    
+    app.$classList
+      .addClass('edit')
+      .find('.list')
+      .append($newClass);
+    
+    $newClass.find('input').focus();
+  }
+  
+  function addItemAttributeList() {
+    var $newAttribute = $('<li><input type="text"></li>');
+  
+    $newAttribute
+      .on('blur change', 'input', function(){
+        if (this.value) {
+          execute(REMOTE$toggleAttribute, [this.value, true, '']);
+          updateAttributes();
+        }
+        else {
+          $newAttribute.remove();
+        }
+        app.$attributeList.removeClass('edit');
+      });
+    
+    app.$attributeList
+      .addClass('edit')
+      .find('.list')
+      .append($newAttribute);
+    
+    $newAttribute.find('input').focus();
+  }
+  /*
+  
     UPDATE LISTS
   
   */
@@ -97,26 +159,24 @@
   }
   
   function updateClassList(classes) {
-    var html = '<div class="empty">No classes</div>';
+    var html = '<li class="empty">No classes</li>';
     
     if (classes.length) {
-      html = '<ul>';
+      html = '';
       
       classes.forEach(function(className){
         html += '<li><label><input type="checkbox" checked data-name="' + className + '"> .' + className + '</label></li>';
       });
-      
-      html += '</ul>';
     }
     
-    app.$classList.html(html);
+    app.$classList.find('.list').html(html);
   }
   
   function updateStateList(states) {
     var html = '';
     
     if (states.length) {
-      html = '<h2>State</h2><ul>';
+      html = '<h2>State</h2><ul class="list">';
       
       states.forEach(function(state){
         html += '<li><label><input type="checkbox" ' + (state.value ? 'checked' : '') + ' data-name="' + state.name + '"> ' + state.name + '</label></li>';
@@ -129,19 +189,17 @@
   }
   
   function updateAttributeList(attributes) {
-    var html = '<div class="empty">No Attributes</div>';
+    var html = '<li class="empty">No Attributes</li>';
     
     if (attributes.length) {
-      html = '<ul>';
+      html = '';
       
       attributes.forEach(function(attribute){
         html += '<li><label><input type="checkbox" checked data-name="' + attribute.name + '" data-value="' + attribute.value + '"> ' + attribute.name + '</label><input type="text" value="' + attribute.value + '"></li>';
       });
-      
-      html += '</ul>';
     }
     
-    app.$attributeList.html(html);
+    app.$attributeList.find('.list').html(html);
   }
   
   function execute(fn, args, callback) {

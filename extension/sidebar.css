@@ -35,6 +35,7 @@ h2 .add {
   padding: 2px 4px 4px;
   cursor: pointer;
   color: #888;
+  display: block;
 }
 
 h2 .add:hover {
@@ -101,6 +102,13 @@ input[type="text"] {
   border-right: 1px solid #bbb;
 }
 
+#classList input[type="text"] {
+  display: block;
+  width: 100%;
+  padding: 4px;
+}
+
+
 #attributeList li {
   display: flex;
   padding-right: 8px;
@@ -134,4 +142,8 @@ input[type="text"] {
 #stateList label {
   padding: 8px;
   color: #222;
+}
+
+.edit .empty {
+  display: none;
 }
