@@ -1,60 +1,147 @@
-(function(chrome){
-  var $ = new TinyQuery();
+;(function(chrome, panels, inspectedWindow, $, undefined){
+  /*
+    Dom mutation events needs to be properly treated for this extension to grow
+  */
+  var app = create();
   
-  document.addEventListener('DOMContentLoaded', selectionListener);
+  app.initialize();
   
-  chrome.devtools.panels.elements.onSelectionChanged.addListener(selectionListener);
+  /* Actions */
   
-  function selectionListener() {
-    execute(classListToArray, [], updateClasses);
-  }
-  
-  function classListToArray(element) {
-    var classes = [];
-
-    [].forEach.call(element.classList, function(_class){ classes.push(_class); });
+  function create() {
+    //app.log('initialize');
     
-    return classes;
+    return {
+      $classList: $('#classList'),
+      $attributeList: $('#attributeList'),
+      $stateList: $('#stateList'),
+      log: function(){ execute(REMOTE$consoleLog, arguments); },
+      error: function(){ execute(REMOTE$consoleError, arguments); },
+      debug: function(){ execute(REMOTE$consoleDebug, arguments); },
+      initialize: function(){
+        bindLists();
+        onSelectionChanged();
+        panels.elements.onSelectionChanged.addListener(onSelectionChanged);
+        execute(REMOTE$bindAttributeChange);
+      }
+    };
   }
   
-  function updateClasses(classes) {
-    var classList = '<span class="empty">No classes</span>';
+  function onSelectionChanged() {
+    execute(REMOTE$fetchElement, [], updateLists);
+  }
+  
+  function updateClasses() {
+    execute(REMOTE$fetchElement, [], function(element){ updateClassList(element.classes); });
+  }
+  
+  function updateStates() {
+    execute(REMOTE$fetchElement, [], function(element){ updateStateList(element.states); });
+  }
+  
+  /*
+  
+    BIND LISTS
+  
+  */
+ 
+  function bindLists() {
+    bindClassList();
+    bindStateList();
+    bindAttributeList();
+  }
+  
+  function bindClassList() {
+    app.$classList
+      .on('change', 'input', function(){
+        execute(REMOTE$toggleClass, [this.getAttribute('data-name'), this.checked]);
+      });
+  }
+  
+  function bindStateList() {
+    app.$stateList
+      .on('change', 'input', function(){
+        execute(REMOTE$toggleState, [this.getAttribute('data-name'), this.checked]);
+      });
+  }
+  
+  function bindAttributeList() {
+    app.$attributeList
+      .on('change', 'input', function(){
+        var $item = $(this).closest('li');
+        var $checkbox = $item.find('input[type="checkbox"]');
+        var $input = $item.find('input[type="text"]');
+        var attributeName = $checkbox.attr('data-name');
+        
+        execute(REMOTE$toggleAttribute, [attributeName, $checkbox[0].checked, $input.val()]);
+        
+        if (attributeName === 'class') {
+          updateClasses();
+        }
+        if ({selected:1, checked:1}[attributeName]) {
+          updateStates();
+        }
+      });
+  }
+  
+  /*
+  
+    UPDATE LISTS
+  
+  */
+  
+  function updateLists(element) {
+    updateClassList(element.classes);
+    updateAttributeList(element.attributes);
+    updateStateList(element.states);
+  }
+  
+  function updateClassList(classes) {
+    var html = '<div class="empty">No classes</div>';
     
     if (classes.length) {
-      classList = '<ul>';
+      html = '<ul>';
       
       classes.forEach(function(className){
-        classList += '<li><label><input type="checkbox" checked data-class="' + className + '"> ' + className + '</label></li>';
+        html += '<li><label><input type="checkbox" checked data-name="' + className + '"> .' + className + '</label></li>';
       });
       
-      classList += '</ul>';
+      html += '</ul>';
     }
     
-    $('#classList').innerHTML = classList;
+    app.$classList.html(html);
+  }
+  
+  function updateStateList(states) {
+    var html = '';
     
-    $.each($('input'), function(element){
-      element.addEventListener('change', function(){
-        execute(toggleClass, [element.getAttribute('data-class'), element.checked]);
-      });
-    });
-  }
-  
-  function toggleClass(element, className, checked) {
-    element.classList.toggle(className, checked);
-  }
-  
-  function TinyQuery() {
-    var $ = function TinyQueryInstance(selector) {
-      var elements = document.querySelectorAll(selector);
+    if (states.length) {
+      html = '<h2>State</h2><ul>';
       
-      return (elements.length === 1 ? elements[0] : elements);
-    };
+      states.forEach(function(state){
+        html += '<li><label><input type="checkbox" ' + (state.value ? 'checked' : '') + ' data-name="' + state.name + '"> ' + state.name + '</label></li>';
+      });
+      
+      html += '</ul>';
+    }
     
-    $.each = function $each(arrayLike, callback) {
-      [].forEach.call(arrayLike, callback);
-    };
+    app.$stateList.html(html);
+  }
+  
+  function updateAttributeList(attributes) {
+    var html = '<div class="empty">No Attributes</div>';
     
-    return $;
+    if (attributes.length) {
+      html = '<ul>';
+      
+      attributes.forEach(function(attribute){
+        html += '<li><label><input type="checkbox" checked data-name="' + attribute.name + '" data-value="' + attribute.value + '"> ' + attribute.name + '</label><input type="text" value="' + attribute.value + '"></li>';
+      });
+      
+      html += '</ul>';
+    }
+    
+    app.$attributeList.html(html);
   }
   
   function execute(fn, args, callback) {
@@ -67,6 +154,72 @@
       }
     });
     
-    return chrome.devtools.inspectedWindow.eval('(' + fn.toString() + ')(' + args.join() + ')', callback);
+    return inspectedWindow.eval('(' + fn.toString() + ')(' + args.join() + ')', callback);
   }
-})(chrome);
+  
+  /* REMOTE */
+  
+  function REMOTE$consoleLog() {
+    //console.log.apply(console, [].slice.call(arguments, 1));
+    console.log(arguments);
+  }
+  function REMOTE$consoleDebug() {
+    //console.debug.apply(console, [].slice.call(arguments, 1));
+  }
+  function REMOTE$consoleError() {
+    //console.error.apply(console, [].slice.call(arguments, 1));
+  }
+  
+  function REMOTE$fetchElement($0) {
+    var element = {
+      classes: [],
+      attributes: [],
+      states: []
+    };
+
+    if ({checkbox: 1, radio:1}[$0.type]) {
+      element.states.push({ name: 'checked',  value: $0.checked });
+    }
+    if ($0.tagName === 'OPTION') {
+      element.states.push({ name: 'selected',  value: $0.selected });
+    }
+    
+    [].forEach.call($0.classList, function(_class){
+      element.classes.push(_class);
+    });
+    
+    [].forEach.call($0.attributes, function(_attribute){
+      element.attributes.push({ name: _attribute.name, value: _attribute.value });
+    });
+    
+    return element;
+  }
+  
+  function REMOTE$toggleClass(element, name, active) {
+    element.classList.toggle(name, active);
+  }
+  
+  function REMOTE$toggleState(element, name, active) {
+    element[name] = active;
+  }
+  
+  function REMOTE$toggleAttribute(element, name, active, value) {
+    if (!active) {
+      element.removeAttribute(name);
+    }
+    else {
+      element.setAttribute(name, value);
+    }
+  }
+  
+  function REMOTE$bindAttributeChange(element) {
+    var callback = function(e){
+      //find how to trigger a reaction from inspectedWindow into
+      //the extension to update the panel
+      //alert('mutated');
+    };
+    var mutation = new MutationObserver(callback);
+    
+    mutation.observe(document, { attributes: true, subtree: true });
+  }
+})(chrome, chrome.devtools.panels, chrome.devtools.inspectedWindow, Zepto);
