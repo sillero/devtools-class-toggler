@@ -1,10 +1,10 @@
 {
   "name": "devtools-class-toggler",
   "manifest": {
-      "name": "DevTools CSS Class/Attribute Toggler",
+      "name": "DevTools Classes & Atributes panel",
       "short_name": "DevTools Classes & Attributes",
       "version": "0.2.2",
-      "description": "Toggle elements classes and attributes",
+      "description": "Toggle classes and attributes",
       "author": "Gustavo Sillero <gustavo@sille.ro>",
       "homepage_url": "http://gustavo.sille.ro",
       "devtools_page": "devtools.html",
